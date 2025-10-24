@@ -1,7 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#3b82f6" rx="64"/>
-  <path fill="#ffffff" d="M128 160h256v32H128zm0 80h256v32H128zm0 80h256v32H128z"/>
-  <circle cx="96" cy="176" r="16" fill="#ffffff"/>
-  <circle cx="96" cy="256" r="16" fill="#ffffff"/>
-  <circle cx="96" cy="336" r="16" fill="#ffffff"/>
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded rectangle background -->
+  <rect width="512" height="512" fill="url(#bgGrad)" rx="80"/>
+
+  <!-- Production chart icon -->
+  <!-- Chart bars -->
+  <rect x="100" y="300" width="60" height="120" fill="#ffffff" rx="8" opacity="0.9"/>
+  <rect x="180" y="250" width="60" height="170" fill="#ffffff" rx="8"/>
+  <rect x="260" y="220" width="60" height="200" fill="#ffffff" rx="8" opacity="0.9"/>
+  <rect x="340" y="180" width="60" height="240" fill="#ffffff" rx="8"/>
+
+  <!-- Target line (dashed) -->
+  <line x1="80" y1="200" x2="440" y2="200" stroke="#fbbf24" stroke-width="6" stroke-dasharray="15,10" opacity="0.9"/>
+
+  <!-- Clock/time indicator in top right -->
+  <circle cx="420" cy="92" r="50" fill="#ffffff" opacity="0.2"/>
+  <circle cx="420" cy="92" r="40" fill="none" stroke="#ffffff" stroke-width="4"/>
+  <line x1="420" y1="92" x2="420" y2="65" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <line x1="420" y1="92" x2="440" y2="92" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
 </svg>
