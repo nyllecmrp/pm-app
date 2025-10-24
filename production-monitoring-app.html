@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Plan vs Actual Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .form-section {
+            padding: 30px;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .input-group input[readonly] {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        
+        .yellow-input {
+            background-color: #fffacd !important;
+            border-color: #ffd700 !important;
+        }
+        
+        .blue-input {
+            background-color: #e6f3ff !important;
+            border-color: #4da6ff !important;
+        }
+        
+        .results-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .result-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .result-card h3 {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .result-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .time-table {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .editable {
+            background: #fffacd;
+            cursor: text;
+            transition: all 0.3s;
+        }
+        
+        .editable:focus {
+            outline: 2px solid #667eea;
+            outline-offset: -1px;
+        }
+        
+        .calculated {
+            background: #e6f3ff;
+            font-weight: 500;
+        }
+        
+        .variance-positive {
+            color: green;
+            font-weight: bold;
+        }
+        
+        .variance-negative {
+            color: red;
+            font-weight: bold;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        }
+        
+        .summary-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            border-radius: 10px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .summary-card h4 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .summary-card .big-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 0.85em;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Production Monitoring System</h1>
+            <p>Plan vs Actual Performance Tracking</p>
+        </div>
+        
+        <div class="form-section">
+            <h2 style="margin-bottom: 20px; color: #333;">Setup Information</h2>
+            
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Production Line</label>
+                    <input type="text" id="line" class="yellow-input" placeholder="Enter line name">
+                </div>
+                
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="date" class="yellow-input">
+                </div>
+                
+                <div class="input-group">
+                    <label>Daily Plan Target</label>
+                    <input type="number" id="planTarget" class="yellow-input" placeholder="103">
+                </div>
+                
+                <div class="input-group">
+                    <label>Achievement Factor</label>
+                    <input type="number" id="achievementFactor" class="yellow-input" step="0.01" placeholder="1.35">
+                </div>
+            </div>
+            
+            <h2 style="margin-bottom: 20px; margin-top: 30px; color: #333;">Time & Manpower Settings</h2>
+            
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Required Manpower</label>
+                    <input type="number" id="requiredManpower" class="yellow-input" step="0.01" placeholder="16.33">
+                </div>
+                
+                <div class="input-group">
+                    <label>Actual Manpower</label>
+                    <input type="number" id="actualManpower" class="yellow-input" step="0.01" placeholder="16.33">
+                </div>
+                
+                <div class="input-group">
+                    <label>Start Time</label>
+                    <input type="time" id="startTime" class="yellow-input" value="06:00">
+                </div>
+                
+                <div class="input-group">
+                    <label>End Time</label>
+                    <input type="time" id="endTime" class="yellow-input" value="18:00">
+                </div>
+                
+                <div class="input-group">
+                    <label>Break Time (hours)</label>
+                    <input type="number" id="breakTime" class="yellow-input" step="0.01" placeholder="1.42">
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <h3 style="margin-bottom: 15px; color: #333;">Calculated Metrics</h3>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3>Total Time (hours)</h3>
+                        <div class="value" id="totalTime">0</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Working Time (hours)</h3>
+                        <div class="value" id="workingTime">0</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Hourly Target</h3>
+                        <div class="value" id="hourlyTarget">0</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Tact Time (seconds)</h3>
+                        <div class="value" id="tactTime">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="calculateMetrics()">Calculate Metrics</button>
+                <button class="btn btn-secondary" onclick="generateTimeTable()">Generate Time Table</button>
+            </div>
+            
+            <div class="time-table" id="timeTableSection" style="display: none;">
+                <h3 style="margin-bottom: 15px; color: #333;">Hourly Production Tracking</h3>
+                <div style="margin-bottom: 15px;">
+                    <button class="btn" onclick="addRow()">➕ Add Time Slot</button>
+                    <button class="btn btn-secondary" onclick="removeLastRow()">➖ Remove Last Row</button>
+                </div>
+                <table id="productionTable">
+                    <thead>
+                        <tr>
+                            <th>Time Slot</th>
+                            <th>Working Time</th>
+                            <th>Plan</th>
+                            <th>Plan Cumulative</th>
+                            <th>Actual</th>
+                            <th>Variance (+/-)</th>
+                            <th>Productivity Rate (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="summary-section" id="summarySection" style="display: none;">
+                <h3 style="color: #333;">Production Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <h4>Total Plan</h4>
+                        <div class="big-value" id="totalPlan">0</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Total Actual</h4>
+                        <div class="big-value" id="totalActual">0</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Overall Variance</h4>
+                        <div class="big-value" id="totalVariance">0</div>
+                    </div>
+                    <div class="summary-card">
+                        <h4>Avg Productivity</h4>
+                        <div class="big-value" id="avgProductivity">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize with default values
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default values
+            document.getElementById('planTarget').value = '103';
+            document.getElementById('achievementFactor').value = '1.35';
+            document.getElementById('requiredManpower').value = '16.33';
+            document.getElementById('actualManpower').value = '16.33';
+            document.getElementById('breakTime').value = '1.42';
+            
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            
+            // Auto-calculate when inputs change
+            const inputs = ['planTarget', 'achievementFactor', 'requiredManpower', 
+                          'actualManpower', 'startTime', 'endTime', 'breakTime'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateMetrics);
+            });
+        });
+        
+        function calculateMetrics() {
+            // Get input values
+            const planTarget = parseFloat(document.getElementById('planTarget').value) || 0;
+            const achievementFactor = parseFloat(document.getElementById('achievementFactor').value) || 1;
+            const requiredManpower = parseFloat(document.getElementById('requiredManpower').value) || 1;
+            const actualManpower = parseFloat(document.getElementById('actualManpower').value) || 1;
+            const breakTime = parseFloat(document.getElementById('breakTime').value) || 0;
+            
+            // Calculate time difference
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            
+            if (startTime && endTime) {
+                const start = new Date(`2000-01-01T${startTime}:00`);
+                const end = new Date(`2000-01-01T${endTime}:00`);
+                
+                // Handle overnight shift
+                if (end < start) {
+                    end.setDate(end.getDate() + 1);
+                }
+                
+                const totalTimeHours = (end - start) / (1000 * 60 * 60);
+                const workingTimeHours = totalTimeHours - breakTime;
+                const hourlyTarget = planTarget / workingTimeHours;
+                const tactTime = 3600 / hourlyTarget;
+                
+                // Update display
+                document.getElementById('totalTime').textContent = totalTimeHours.toFixed(2);
+                document.getElementById('workingTime').textContent = workingTimeHours.toFixed(2);
+                document.getElementById('hourlyTarget').textContent = hourlyTarget.toFixed(2);
+                document.getElementById('tactTime').textContent = tactTime.toFixed(2);
+                
+                // Store for later use
+                window.calculatedMetrics = {
+                    totalTimeHours,
+                    workingTimeHours,
+                    hourlyTarget,
+                    tactTime,
+                    planTarget,
+                    achievementFactor,
+                    requiredManpower,
+                    actualManpower
+                };
+            }
+        }
+        
+        function generateTimeTable() {
+            if (!window.calculatedMetrics) {
+                alert('Please calculate metrics first!');
+                return;
+            }
+            
+            document.getElementById('timeTableSection').style.display = 'block';
+            document.getElementById('summarySection').style.display = 'block';
+            
+            // Add some initial rows
+            for (let i = 0; i < 12; i++) {
+                addRow();
+            }
+            
+            // Set default time slots
+            const defaultTimeSlots = [
+                '6:00 ~ 7:00', '7:00 ~ 8:00', '8:00 ~ 9:00', '9:00 ~ 9:30',
+                '9:30 ~ 10:30', '10:30 ~ 11:30', '11:30 ~ 12:30', '12:30 ~ 1:10',
+                '1:10 ~ 2:10', '2:10 ~ 3:10', '3:10 ~ 4:10', '4:10 ~ 5:10'
+            ];
+            
+            const defaultWorkingTimes = [1, 1, 1, 0.5, 1, 1, 1, 0.67, 1, 1, 1, 1];
+            
+            const rows = document.getElementById('tableBody').getElementsByTagName('tr');
+            Array.from(rows).forEach((row, index) => {
+                if (index < defaultTimeSlots.length) {
+                    row.cells[0].textContent = defaultTimeSlots[index];
+                    row.cells[1].textContent = defaultWorkingTimes[index];
+                }
+            });
+            
+            updateCalculations();
+        }
+        
+        function addRow() {
+            const tbody = document.getElementById('tableBody');
+            const rowIndex = tbody.children.length;
+            const row = document.createElement('tr');
+            
+            // Time slot (editable)
+            const timeCell = document.createElement('td');
+            timeCell.contentEditable = true;
+            timeCell.className = 'editable';
+            timeCell.textContent = '';
+            timeCell.placeholder = 'e.g., 6:00 ~ 7:00';
+            row.appendChild(timeCell);
+            
+            // Working time (editable)
+            const workingTimeCell = document.createElement('td');
+            workingTimeCell.contentEditable = true;
+            workingTimeCell.className = 'editable';
+            workingTimeCell.textContent = '1';
+            workingTimeCell.dataset.rowIndex = rowIndex;
+            workingTimeCell.addEventListener('input', function() {
+                updateCalculations();
+            });
+            row.appendChild(workingTimeCell);
+            
+            // Plan (calculated)
+            const planCell = document.createElement('td');
+            planCell.className = 'calculated';
+            planCell.id = `plan-${rowIndex}`;
+            row.appendChild(planCell);
+            
+            // Plan Cumulative (calculated)
+            const planCumCell = document.createElement('td');
+            planCumCell.className = 'calculated';
+            planCumCell.id = `planCum-${rowIndex}`;
+            row.appendChild(planCumCell);
+            
+            // Actual (editable)
+            const actualCell = document.createElement('td');
+            actualCell.contentEditable = true;
+            actualCell.className = 'editable';
+            actualCell.textContent = '0';
+            actualCell.dataset.rowIndex = rowIndex;
+            actualCell.addEventListener('input', function() {
+                updateCalculations();
+            });
+            row.appendChild(actualCell);
+            
+            // Variance (calculated)
+            const varianceCell = document.createElement('td');
+            varianceCell.className = 'calculated';
+            varianceCell.id = `variance-${rowIndex}`;
+            row.appendChild(varianceCell);
+            
+            // Productivity Rate (calculated)
+            const productivityCell = document.createElement('td');
+            productivityCell.className = 'calculated';
+            productivityCell.id = `productivity-${rowIndex}`;
+            row.appendChild(productivityCell);
+            
+            tbody.appendChild(row);
+            updateCalculations();
+        }
+        
+        function removeLastRow() {
+            const tbody = document.getElementById('tableBody');
+            if (tbody.children.length > 0) {
+                tbody.removeChild(tbody.lastChild);
+                updateCalculations();
+            }
+        }
+        
+        function formatTime(date) {
+            return date.toTimeString().slice(0, 5);
+        }
+        
+        function updateCalculations() {
+            if (!window.calculatedMetrics) return;
+            
+            const { hourlyTarget, requiredManpower, actualManpower, achievementFactor } = window.calculatedMetrics;
+            const rows = document.getElementById('tableBody').getElementsByTagName('tr');
+            
+            let cumulativePlan = 0;
+            let totalActual = 0;
+            let productivitySum = 0;
+            let validProductivityCount = 0;
+            
+            Array.from(rows).forEach((row, index) => {
+                const cells = row.getElementsByTagName('td');
+                
+                // Get working time from manual input
+                const workingTime = parseFloat(cells[1].textContent) || 0;
+                
+                // Calculate plan based on working time
+                const plan = hourlyTarget * workingTime;
+                document.getElementById(`plan-${index}`).textContent = plan.toFixed(2);
+                
+                // Calculate cumulative plan
+                cumulativePlan += plan;
+                document.getElementById(`planCum-${index}`).textContent = cumulativePlan.toFixed(2);
+                
+                // Get actual value
+                const actual = parseFloat(cells[4].textContent) || 0;
+                
+                // Calculate variance
+                const variance = actual - cumulativePlan;
+                const varianceCell = document.getElementById(`variance-${index}`);
+                varianceCell.textContent = variance.toFixed(2);
+                varianceCell.className = variance >= 0 ? 'calculated variance-positive' : 'calculated variance-negative';
+                
+                // Calculate productivity rate as percentage
+                const productivityCell = document.getElementById(`productivity-${index}`);
+                if (cumulativePlan > 0 && actual > 0) {
+                    const productivity = (actual / cumulativePlan) * (requiredManpower / actualManpower) * achievementFactor;
+                    const productivityPercentage = productivity * 100;
+                    productivityCell.textContent = productivityPercentage.toFixed(2) + '%';
+                    productivitySum += productivity;
+                    validProductivityCount++;
+                } else {
+                    productivityCell.textContent = '0.00%';
+                }
+                
+                totalActual += actual;
+            });
+            
+            // Update summary
+            document.getElementById('totalPlan').textContent = cumulativePlan.toFixed(0);
+            document.getElementById('totalActual').textContent = totalActual.toFixed(0);
+            document.getElementById('totalVariance').textContent = (totalActual - cumulativePlan).toFixed(0);
+            
+            const avgProductivity = validProductivityCount > 0 ? (productivitySum / validProductivityCount) * 100 : 0;
+            document.getElementById('avgProductivity').textContent = avgProductivity.toFixed(1) + '%';
+        }
+    </script>
+</body>
+</html>
